@@ -1,18 +1,24 @@
-AFRAME.registerComponent('ar-hit-test', {
+AFRAME.registerComponent('custom-ar-hit-test', {
     schema: {
         target: { type: 'selector' }
     },
 
     init: function () {
+        console.log("custom-ar-hit-test initialized");
         this.xrHitTestSource = null;
         this.viewerSpace = null;
         this.refSpace = null;
 
         this.el.sceneEl.addEventListener('enter-vr', () => {
+            console.log("Enter VR event received");
             const session = this.el.sceneEl.renderer.xr.getSession();
-            if (!session) return;
+            if (!session) {
+                console.error("No XR session found in renderer");
+                return;
+            }
 
             this.el.sceneEl.renderer.xr.addEventListener('sessionstart', (ev) => {
+                console.log("XR session started");
                 this.session = ev.session;
             });
 
@@ -23,19 +29,22 @@ AFRAME.registerComponent('ar-hit-test', {
                 this.viewerSpace = space;
                 session.requestHitTestSource({ space: this.viewerSpace })
                     .then((source) => {
+                        console.log("Hit test source obtained");
                         this.xrHitTestSource = source;
-                    });
-            });
+                    })
+                    .catch(err => console.error("Error requesting hit test source:", err));
+            }).catch(err => console.error("Error requesting viewer reference space:", err));
 
             session.requestReferenceSpace('local').then((space) => {
                 this.refSpace = space;
-            });
+            }).catch(err => console.error("Error requesting local reference space:", err));
 
             // Handle select event for placement
             session.addEventListener('select', this.onSelect.bind(this));
         });
 
         this.el.sceneEl.addEventListener('exit-vr', () => {
+            console.log("Exit VR");
             this.xrHitTestSource = null;
             this.session = null;
         });
@@ -45,6 +54,7 @@ AFRAME.registerComponent('ar-hit-test', {
         if (!this.data.target) return;
         if (!this.data.target.getAttribute('visible')) return;
 
+        console.log("Surface selected!");
         // Emit event that a surface was selected at the reticle's position
         this.el.emit('ar-hit-test-select', {
             position: this.data.target.object3D.position,
@@ -73,18 +83,17 @@ AFRAME.registerComponent('ar-hit-test', {
 
 AFRAME.registerComponent('ar-hit-test-listener', {
     init: function () {
+        console.log("ar-hit-test-listener initialized");
         const sceneEl = this.el;
         const model = document.querySelector('#placed-model');
         const overlay = document.querySelector('#overlay');
 
         sceneEl.addEventListener('ar-hit-test-select', (event) => {
-            // Mover el modelo a la posición del reticle (pasada en el evento o leída del reticle)
             const reticle = document.querySelector('#reticle');
 
             model.setAttribute('position', reticle.getAttribute('position'));
             model.setAttribute('visible', 'true');
 
-            // Actualizar texto de instrucciones
             if (overlay) overlay.innerText = "Arrastra horizontalmente para rotar";
         });
     }
@@ -96,6 +105,7 @@ AFRAME.registerComponent('smooth-rotate', {
     },
 
     init: function () {
+        console.log("smooth-rotate initialized");
         this.targetRotationY = 0;
         this.currentRotationY = 0;
         this.isDragging = false;

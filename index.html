@@ -38,38 +38,86 @@
             bottom: 20px;
             left: 10px;
             width: 90%;
-            height: 100px;
+            height: 150px;
             overflow-y: scroll;
-            background: rgba(0, 0, 0, 0.5);
-            color: lime;
+            background: rgba(0, 0, 0, 0.7);
+            color: #0f0;
             font-family: monospace;
-            font-size: 10px;
+            font-size: 12px;
             z-index: 999;
             pointer-events: none;
+            display: block;
+            border: 1px solid #0f0;
+            padding: 5px;
+        }
+
+        #start-ar-btn {
+            position: absolute;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+            background: white;
+            color: black;
+            border: 2px solid black;
+            padding: 10px 20px;
+            font-size: 16px;
             display: none;
-            /* Cambiar a block si se necesita depurar */
+            /* Se mostrará si WebXR está disponible */
         }
     </style>
     <script>
-        // Redirigir console.log/error al div en pantalla para depuración móvil
-        window.onerror = function (message, source, lineno, colno, error) {
+        function log(msg) {
             const consoleDiv = document.getElementById('debug-console');
             if (consoleDiv) {
-                consoleDiv.style.display = 'block';
-                consoleDiv.innerHTML += `<div style="color:red">Error: ${message}</div>`;
+                consoleDiv.innerHTML += `<div>> ${msg}</div>`;
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
             }
+            console.log(msg);
+        }
+
+        window.onerror = function (message) {
+            log(`ERROR: ${message}`);
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            log("DOM loaded");
+
+            if ('xr' in navigator) {
+                log("navigator.xr detected");
+                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                    if (supported) {
+                        log("immersive-ar SUPPORTED ✅");
+                        document.getElementById('start-ar-btn').style.display = 'block';
+                    } else {
+                        log("immersive-ar NOT supported ❌");
+                        log("Browser has WebXR but not AR capability");
+                    }
+                }).catch(err => {
+                    log("Error checking support: " + err);
+                });
+            } else {
+                log("WebXR NOT found in navigator ❌");
+                log("Make sure you are on HTTPS and a compatible device (Android Chrome)");
+            }
+
             const scene = document.querySelector('a-scene');
+            scene.addEventListener('loaded', () => {
+                log("A-Frame scene loaded");
+            });
+            scene.addEventListener('enter-vr', () => {
+                log("Entering VR/AR mode...");
+            });
             scene.addEventListener('webxr-error', (e) => {
-                const consoleDiv = document.getElementById('debug-console');
-                if (consoleDiv) {
-                    consoleDiv.style.display = 'block';
-                    consoleDiv.innerHTML += `<div style="color:red">WebXR Error: ${e.detail.error}</div>`;
-                }
+                log("WebXR Error event: " + e.detail.error);
             });
         });
+
+        function startAR() {
+            log("Attempting to enter AR...");
+            const scene = document.querySelector('a-scene');
+            scene.enterVR();
+        }
     </script>
 </head>
 
@@ -78,34 +126,33 @@
         Busca una superficie plana y toca para colocar
     </div>
 
-    <div id="debug-console"></div>
+    <div id="debug-console">Inicializando...<br></div>
+
+    <button id="start-ar-btn" onclick="startAR()">INICIAR AR (Manual)</button>
 
     <!-- 
-      WebXR Scene with hit-test enabled.
-      ar-hit-test system handle plane detection automatically.
+      Usamos custom-ar-hit-test para evitar conflictos
     -->
     <a-scene webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #overlay"
-        ar-hit-test="target: #reticle; type: map;" ar-hit-test-listener
-        renderer="colorManagement: true; physicallyCorrectLights: true;">
+        custom-ar-hit-test="target: #reticle;" ar-hit-test-listener
+        renderer="colorManagement: true; physicallyCorrectLights: true;" vr-mode-ui="enabled: true">
+        <!-- Mantener UI por defecto también, por si acaso -->
 
         <a-assets>
             <a-asset-item id="model-asset" src="./10_2_2026.glb"></a-asset-item>
         </a-assets>
 
-        <!-- Reticle: Indicador visual de dónde se colocará el objeto -->
+        <!-- Reticle -->
         <a-entity id="reticle" geometry="primitive: ring; radiusInner: 0.15; radiusOuter: 0.2" rotation="-90 0 0"
-            material="shader: flat; color: white; opacity: 0.6" visible="false">
+            material="shader: flat; color: yellow; opacity: 0.8" visible="false">
         </a-entity>
 
-        <!-- El objeto a colocar -->
-        <!-- Inicialmente visible false hasta que se coloque -->
+        <!-- Modelo -->
         <a-entity id="placed-model" visible="false" smooth-rotate>
             <a-entity gltf-model="#model-asset" scale="0.5 0.5 0.5" position="0 0 0">
-                <!-- Ajustar rotación base/escala del modelo si es necesario -->
             </a-entity>
         </a-entity>
 
-        <!-- Iluminación básica -->
         <a-entity light="type: ambient; intensity: 1;"></a-entity>
         <a-entity light="type: directional; intensity: 1.5; castShadow: true;" position="1 2 3"></a-entity>
 
