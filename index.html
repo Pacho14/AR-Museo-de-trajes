@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Museo - Markerless</title>
+    <!-- A-Frame library -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <!-- Lógica AR personalizada -->
+    <script src="components/ar-logic.js"></script>
+    
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #overlay {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            pointer-events: none; /* Permitir clicks a través del overlay */
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            font-size: 1.2rem;
+            background: rgba(0,0,0,0.3);
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="overlay">
+        Busca una superficie plana y toca para colocar
+    </div>
+
+    <!-- 
+      WebXR Scene with hit-test enabled.
+      ar-hit-test system handle plane detection automatically.
+    -->
+    <a-scene 
+        webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #overlay"
+        ar-hit-test="target: #reticle; type: map;"
+        ar-hit-test-listener
+        renderer="colorManagement: true; physicallyCorrectLights: true;">
+
+        <a-assets>
+            <a-asset-item id="model-asset" src="./10_2_2026.glb"></a-asset-item>
+        </a-assets>
+
+        <!-- Reticle: Indicador visual de dónde se colocará el objeto -->
+        <a-entity id="reticle" 
+                  geometry="primitive: ring; radiusInner: 0.15; radiusOuter: 0.2" 
+                  rotation="-90 0 0" 
+                  material="shader: flat; color: white; opacity: 0.6"
+                  visible="false">
+        </a-entity>
+
+        <!-- El objeto a colocar -->
+        <!-- Inicialmente visible false hasta que se coloque -->
+        <a-entity id="placed-model" visible="false" smooth-rotate>
+            <a-entity gltf-model="#model-asset" 
+                      scale="0.5 0.5 0.5" 
+                      position="0 0 0">
+                <!-- Ajustar rotación base/escala del modelo si es necesario -->
+            </a-entity>
+        </a-entity>
+
+        <!-- Iluminación básica -->
+        <a-entity light="type: ambient; intensity: 1;"></a-entity>
+        <a-entity light="type: directional; intensity: 1.5; castShadow: true;" position="1 2 3"></a-entity>
+
+    </a-scene>
+</body>
+</html>
