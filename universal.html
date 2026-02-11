@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museo AR - Universal</title>
+    <!-- Importar model-viewer -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            font-family: sans-serif;
+        }
+
+        model-viewer {
+            width: 100vw;
+            height: 100vh;
+            background-color: #eee;
+        }
+
+        /* Botón de AR personalizado */
+        .ar-button {
+            background-color: white;
+            border-radius: 4px;
+            border: none;
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            padding: 12px 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+            color: #333;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        /* Instrucciones de gestos */
+        .interaction-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            display: none;
+            /* Model-viewer maneja el suyo propio, pero podemos personalizar */
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 
+        ar: habilita AR.
+        ar-modes: intenta WebXR primero, luego SceneViewer (Android nativo), luego QuickLook (iOS).
+        camera-controls: permite al usuario rotar el modelo en la vista previa 3D.
+        auto-rotate: rotación automática en vista previa.
+        shadow-intensity: sombras realistas.
+    -->
+    <model-viewer src="./10_2_2026.glb" alt="Modelo 3D Museo" ar ar-modes="webxr scene-viewer quick-look"
+        camera-controls auto-rotate shadow-intensity="1" touch-action="pan-y">
+
+        <button slot="ar-button" class="ar-button">
+            👋 Ver en tu espacio
+        </button>
+
+    </model-viewer>
+
+    <script>
+        const modelViewer = document.querySelector('model-viewer');
+
+        modelViewer.addEventListener('ar-status', (event) => {
+            if (event.detail.status === 'failed') {
+                alert('Tu dispositivo no soporta AR o necesita una actualización de Servicios de Google Play para AR.');
+            }
+        });
+
+        console.log("Model Viewer loaded");
+    </script>
+</body>
+
+</html>
