@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -8,9 +9,14 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <!-- Lógica AR personalizada -->
     <script src="components/ar-logic.js"></script>
-    
+
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
         #overlay {
             position: absolute;
             top: 20px;
@@ -18,28 +24,68 @@
             width: 100%;
             text-align: center;
             z-index: 100;
-            pointer-events: none; /* Permitir clicks a través del overlay */
+            pointer-events: none;
+            /* Permitir clicks a través del overlay */
             color: white;
             text-shadow: 1px 1px 2px black;
             font-size: 1.2rem;
-            background: rgba(0,0,0,0.3);
+            background: rgba(0, 0, 0, 0.3);
             padding: 10px 0;
         }
+
+        #debug-console {
+            position: absolute;
+            bottom: 20px;
+            left: 10px;
+            width: 90%;
+            height: 100px;
+            overflow-y: scroll;
+            background: rgba(0, 0, 0, 0.5);
+            color: lime;
+            font-family: monospace;
+            font-size: 10px;
+            z-index: 999;
+            pointer-events: none;
+            display: none;
+            /* Cambiar a block si se necesita depurar */
+        }
     </style>
+    <script>
+        // Redirigir console.log/error al div en pantalla para depuración móvil
+        window.onerror = function (message, source, lineno, colno, error) {
+            const consoleDiv = document.getElementById('debug-console');
+            if (consoleDiv) {
+                consoleDiv.style.display = 'block';
+                consoleDiv.innerHTML += `<div style="color:red">Error: ${message}</div>`;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const scene = document.querySelector('a-scene');
+            scene.addEventListener('webxr-error', (e) => {
+                const consoleDiv = document.getElementById('debug-console');
+                if (consoleDiv) {
+                    consoleDiv.style.display = 'block';
+                    consoleDiv.innerHTML += `<div style="color:red">WebXR Error: ${e.detail.error}</div>`;
+                }
+            });
+        });
+    </script>
 </head>
+
 <body>
     <div id="overlay">
         Busca una superficie plana y toca para colocar
     </div>
 
+    <div id="debug-console"></div>
+
     <!-- 
       WebXR Scene with hit-test enabled.
       ar-hit-test system handle plane detection automatically.
     -->
-    <a-scene 
-        webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #overlay"
-        ar-hit-test="target: #reticle; type: map;"
-        ar-hit-test-listener
+    <a-scene webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #overlay"
+        ar-hit-test="target: #reticle; type: map;" ar-hit-test-listener
         renderer="colorManagement: true; physicallyCorrectLights: true;">
 
         <a-assets>
@@ -47,19 +93,14 @@
         </a-assets>
 
         <!-- Reticle: Indicador visual de dónde se colocará el objeto -->
-        <a-entity id="reticle" 
-                  geometry="primitive: ring; radiusInner: 0.15; radiusOuter: 0.2" 
-                  rotation="-90 0 0" 
-                  material="shader: flat; color: white; opacity: 0.6"
-                  visible="false">
+        <a-entity id="reticle" geometry="primitive: ring; radiusInner: 0.15; radiusOuter: 0.2" rotation="-90 0 0"
+            material="shader: flat; color: white; opacity: 0.6" visible="false">
         </a-entity>
 
         <!-- El objeto a colocar -->
         <!-- Inicialmente visible false hasta que se coloque -->
         <a-entity id="placed-model" visible="false" smooth-rotate>
-            <a-entity gltf-model="#model-asset" 
-                      scale="0.5 0.5 0.5" 
-                      position="0 0 0">
+            <a-entity gltf-model="#model-asset" scale="0.5 0.5 0.5" position="0 0 0">
                 <!-- Ajustar rotación base/escala del modelo si es necesario -->
             </a-entity>
         </a-entity>
@@ -70,4 +111,5 @@
 
     </a-scene>
 </body>
+
 </html>
