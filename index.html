@@ -3,160 +3,82 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Museo - Markerless</title>
-    <!-- A-Frame library -->
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <!-- Lógica AR personalizada -->
-    <script src="components/ar-logic.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museo AR - Universal</title>
+    <!-- Importar model-viewer -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
+            padding: 0;
+            background-color: #f0f0f0;
             font-family: sans-serif;
         }
 
-        #overlay {
+        model-viewer {
+            width: 100vw;
+            height: 100vh;
+            background-color: #eee;
+        }
+
+        /* Botón de AR personalizado */
+        .ar-button {
+            background-color: white;
+            border-radius: 4px;
+            border: none;
             position: absolute;
-            top: 20px;
-            left: 0;
-            width: 100%;
-            text-align: center;
+            bottom: 30px;
+            right: 30px;
+            padding: 12px 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+            color: #333;
+            cursor: pointer;
             z-index: 100;
-            pointer-events: none;
-            /* Permitir clicks a través del overlay */
-            color: white;
-            text-shadow: 1px 1px 2px black;
-            font-size: 1.2rem;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 0;
         }
 
-        #debug-console {
+        /* Instrucciones de gestos */
+        .interaction-prompt {
             position: absolute;
-            bottom: 20px;
-            left: 10px;
-            width: 90%;
-            height: 150px;
-            overflow-y: scroll;
-            background: rgba(0, 0, 0, 0.7);
-            color: #0f0;
-            font-family: monospace;
-            font-size: 12px;
-            z-index: 999;
-            pointer-events: none;
-            display: block;
-            border: 1px solid #0f0;
-            padding: 5px;
-        }
-
-        #start-ar-btn {
-            position: absolute;
-            bottom: 200px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
-            z-index: 200;
-            background: white;
-            color: black;
-            border: 2px solid black;
-            padding: 10px 20px;
-            font-size: 16px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
             display: none;
-            /* Se mostrará si WebXR está disponible */
+            /* Model-viewer maneja el suyo propio, pero podemos personalizar */
         }
     </style>
-    <script>
-        function log(msg) {
-            const consoleDiv = document.getElementById('debug-console');
-            if (consoleDiv) {
-                consoleDiv.innerHTML += `<div>> ${msg}</div>`;
-                consoleDiv.scrollTop = consoleDiv.scrollHeight;
-            }
-            console.log(msg);
-        }
-
-        window.onerror = function (message) {
-            log(`ERROR: ${message}`);
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            log("DOM loaded");
-
-            if ('xr' in navigator) {
-                log("navigator.xr detected");
-                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-                    if (supported) {
-                        log("immersive-ar SUPPORTED ✅");
-                        document.getElementById('start-ar-btn').style.display = 'block';
-                    } else {
-                        log("immersive-ar NOT supported ❌");
-                        log("Browser has WebXR but not AR capability");
-                    }
-                }).catch(err => {
-                    log("Error checking support: " + err);
-                });
-            } else {
-                log("WebXR NOT found in navigator ❌");
-                log("Make sure you are on HTTPS and a compatible device (Android Chrome)");
-            }
-
-            const scene = document.querySelector('a-scene');
-            scene.addEventListener('loaded', () => {
-                log("A-Frame scene loaded");
-            });
-            scene.addEventListener('enter-vr', () => {
-                log("Entering VR/AR mode...");
-            });
-            scene.addEventListener('webxr-error', (e) => {
-                log("WebXR Error event: " + e.detail.error);
-            });
-        });
-
-        function startAR() {
-            log("Attempting to enter AR...");
-            const scene = document.querySelector('a-scene');
-            scene.enterVR();
-        }
-    </script>
 </head>
 
 <body>
-    <div id="overlay">
-        Busca una superficie plana y toca para colocar
-    </div>
-
-    <div id="debug-console">Inicializando...<br></div>
-
-    <button id="start-ar-btn" onclick="startAR()">INICIAR AR (Manual)</button>
 
     <!-- 
-      Usamos custom-ar-hit-test para evitar conflictos
+        ar: habilita AR.
+        ar-modes: intenta WebXR primero, luego SceneViewer (Android nativo), luego QuickLook (iOS).
+        camera-controls: permite al usuario rotar el modelo en la vista previa 3D.
+        auto-rotate: rotación automática en vista previa.
+        shadow-intensity: sombras realistas.
     -->
-    <a-scene webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #overlay"
-        custom-ar-hit-test="target: #reticle;" ar-hit-test-listener
-        renderer="colorManagement: true; physicallyCorrectLights: true;" vr-mode-ui="enabled: true">
-        <!-- Mantener UI por defecto también, por si acaso -->
+    <model-viewer src="./10_2_2026.glb" alt="Modelo 3D Museo" ar ar-modes="webxr scene-viewer quick-look"
+        camera-controls auto-rotate shadow-intensity="1" touch-action="pan-y">
 
-        <a-assets>
-            <a-asset-item id="model-asset" src="./10_2_2026.glb"></a-asset-item>
-        </a-assets>
+        <button slot="ar-button" class="ar-button">
+            👋 Ver en tu espacio
+        </button>
 
-        <!-- Reticle -->
-        <a-entity id="reticle" geometry="primitive: ring; radiusInner: 0.15; radiusOuter: 0.2" rotation="-90 0 0"
-            material="shader: flat; color: yellow; opacity: 0.8" visible="false">
-        </a-entity>
+    </model-viewer>
 
-        <!-- Modelo -->
-        <a-entity id="placed-model" visible="false" smooth-rotate>
-            <a-entity gltf-model="#model-asset" scale="0.5 0.5 0.5" position="0 0 0">
-            </a-entity>
-        </a-entity>
+    <script>
+        const modelViewer = document.querySelector('model-viewer');
 
-        <a-entity light="type: ambient; intensity: 1;"></a-entity>
-        <a-entity light="type: directional; intensity: 1.5; castShadow: true;" position="1 2 3"></a-entity>
+        modelViewer.addEventListener('ar-status', (event) => {
+            if (event.detail.status === 'failed') {
+                alert('Tu dispositivo no soporta AR o necesita una actualización de Servicios de Google Play para AR.');
+            }
+        });
 
-    </a-scene>
+        console.log("Model Viewer loaded");
+    </script>
 </body>
 
 </html>
